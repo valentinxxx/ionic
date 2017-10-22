@@ -589,7 +589,6 @@ declare global {
   namespace JSXElements {
       export interface IonDatetimeAttributes extends HTMLAttributes {
         
-          pickerCtrl?: any,
           disabled?: boolean | "true" | "false",
           min?: any,
           max?: any,
@@ -607,8 +606,7 @@ declare global {
           dayNames?: any,
           dayShortNames?: any,
           pickerOptions?: any,
-          placeholder?: any,
-          value?: any
+          placeholder?: any
       }
   }
 }
@@ -2029,6 +2027,69 @@ declare global {
           pin?: boolean | "true" | "false",
           snaps?: boolean | "true" | "false",
           debounce?: number
+      }
+  }
+}
+
+import { RefresherContent as IonRefresherContent } from './components/refresher/refresher-content';
+
+interface HTMLIonRefresherContentElement extends IonRefresherContent, HTMLElement {
+}
+declare var HTMLIonRefresherContentElement: {
+  prototype: HTMLIonRefresherContentElement;
+  new (): HTMLIonRefresherContentElement;
+};
+declare global {
+  interface HTMLElementTagNameMap {
+      "ion-refresher-content": HTMLIonRefresherContentElement;
+  }
+  interface ElementTagNameMap {
+      "ion-refresher-content": HTMLIonRefresherContentElement;
+  }
+  namespace JSX {
+      interface IntrinsicElements {
+          "ion-refresher-content": JSXElements.IonRefresherContentAttributes;
+      }
+  }
+  namespace JSXElements {
+      export interface IonRefresherContentAttributes extends HTMLAttributes {
+        
+          pullingIcon?: any,
+          pullingText?: any,
+          refreshingSpinner?: any,
+          refreshingText?: any
+      }
+  }
+}
+
+import { Refresher as IonRefresher } from './components/refresher/refresher';
+
+interface HTMLIonRefresherElement extends IonRefresher, HTMLElement {
+}
+declare var HTMLIonRefresherElement: {
+  prototype: HTMLIonRefresherElement;
+  new (): HTMLIonRefresherElement;
+};
+declare global {
+  interface HTMLElementTagNameMap {
+      "ion-refresher": HTMLIonRefresherElement;
+  }
+  interface ElementTagNameMap {
+      "ion-refresher": HTMLIonRefresherElement;
+  }
+  namespace JSX {
+      interface IntrinsicElements {
+          "ion-refresher": JSXElements.IonRefresherAttributes;
+      }
+  }
+  namespace JSXElements {
+      export interface IonRefresherAttributes extends HTMLAttributes {
+        
+          pullMin?: number,
+          pullDelta?: number,
+          closeDuration?: any,
+          snapbackDuration?: any,
+          enabled?: boolean | "true" | "false"
       }
   }
 }
