@@ -1,4 +1,4 @@
-import { Animation, DomController, StencilElement } from '../index';
+import { Animation, StencilElement } from '../index';
 
 export function clamp(min: number, n: number, max: number) {
   return Math.max(min, Math.min(n, max));
@@ -155,13 +155,13 @@ export function applyStyles(elm: HTMLElement, styles: {[styleProp: string]: stri
 
   if (elm) {
     for (var i = 0; i < styleProps.length; i++) {
-      (<any>elm.style)[styleProps[i]] = styles[styleProps[i]];
+      (elm.style as any)[styleProps[i]] = styles[styleProps[i]];
     }
   }
 }
 
-// #<{(|* @hidden |)}>#
-// export type Side = 'left' | 'right' | 'start' | 'end';
+/** @hidden */
+export type Side = 'left' | 'right' | 'start' | 'end';
 
 export function checkEdgeSide(posX: number, isRightSide: boolean, maxEdgeStart: number): boolean {
   if (isRightSide) {
