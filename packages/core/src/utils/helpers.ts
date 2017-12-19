@@ -160,8 +160,8 @@ export function applyStyles(elm: HTMLElement, styles: {[styleProp: string]: stri
   }
 }
 
-/** @hidden */
-export type Side = 'left' | 'right' | 'start' | 'end';
+// #<{(|* @hidden |)}>#
+// export type Side = 'left' | 'right' | 'start' | 'end';
 
 export function checkEdgeSide(posX: number, isRightSide: boolean, maxEdgeStart: number): boolean {
   if (isRightSide) {
@@ -179,7 +179,7 @@ export function checkEdgeSide(posX: number, isRightSide: boolean, maxEdgeStart: 
  * @param isRTL whether the application dir is rtl
  * @param defaultRight whether the default side is right
  */
-export function isRightSide(side: Side, defaultRight: boolean = false): boolean {
+export function isRightSide(side: string, defaultRight: boolean = false): boolean {
   const isRTL = document.dir === 'rtl';
   switch (side) {
     case 'right': return true;
