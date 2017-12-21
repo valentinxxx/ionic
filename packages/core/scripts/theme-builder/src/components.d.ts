@@ -29,6 +29,7 @@ declare global {
   }
   namespace JSXElements {
     export interface AppPreviewAttributes extends HTMLAttributes {
+      cssText?: string;
       demoMode?: string;
       demoUrl?: string;
     }
@@ -93,7 +94,7 @@ declare global {
   namespace JSXElements {
     export interface CssTextAttributes extends HTMLAttributes {
       cssText?: string;
-      themeUrl?: string;
+      themeName?: string;
     }
   }
 }
@@ -185,7 +186,7 @@ declare global {
   }
   namespace JSXElements {
     export interface ThemeSelectorAttributes extends HTMLAttributes {
-      themeData?: { name: string, url: string }[];
+      themeData?: { name: string }[];
     }
   }
 }

@@ -1,5 +1,5 @@
 import { Component, Prop } from '@stencil/core';
-import { createSaveCssUrl, getThemeName } from '../../theme-variables';
+import { STORED_THEME_KEY, deleteCssUrl, getThemeUrl, saveCssUrl } from '../../theme-variables';
 
 
 @Component({
@@ -9,15 +9,18 @@ import { createSaveCssUrl, getThemeName } from '../../theme-variables';
 })
 export class CssText {
 
-  @Prop() themeUrl: string;
+  @Prop() themeName: string;
   @Prop() cssText: string;
 
-  saveCss(ev: UIEvent) {
+  submitUpdate(ev: UIEvent) {
     ev.stopPropagation();
     ev.preventDefault();
 
-    const themeName = getThemeName(this.themeUrl);
-    const url = createSaveCssUrl(themeName, this.cssText);
+    this.saveCss(this.themeName, this.cssText);
+  }
+
+  saveCss(themeName: string, cssText: string) {
+    const url = saveCssUrl(themeName, cssText);
 
     fetch(url).then(rsp => {
       return rsp.text().then(txt => {
@@ -28,16 +31,56 @@ export class CssText {
     });
   }
 
+  createNew(ev: UIEvent) {
+    ev.stopPropagation();
+    ev.preventDefault();
+
+    const name = prompt(`New theme name:`);
+
+    if (name) {
+      const themeName = name.split('.')[0].trim().toLowerCase();
+
+      if (themeName.length) {
+        console.log('createNew themeName', themeName);
+
+        localStorage.setItem(STORED_THEME_KEY, themeName);
+        this.saveCss(themeName, this.cssText);
+      }
+    }
+  }
+
+  deleteTheme(ev: UIEvent) {
+    ev.stopPropagation();
+    ev.preventDefault();
+
+    const shouldDelete = confirm(`Sure you want to delete "${this.themeName}"?`);
+    if (shouldDelete) {
+      const url = deleteCssUrl(this.themeName);
+
+      fetch(url).then(rsp => {
+        return rsp.text().then(txt => {
+          console.log('theme server response:', txt);
+        });
+      }).catch(err => {
+        console.log(err);
+      });
+
+      localStorage.removeItem(STORED_THEME_KEY);
+    }
+  }
+
   render() {
     return [
       <h1>
-        {this.themeUrl}
+        {getThemeUrl(this.themeName)}
       </h1>,
       <div>
         <textarea readOnly spellcheck='false'>{this.cssText}</textarea>
       </div>,
       <div>
-        <button type='button' onClick={this.saveCss.bind(this)}>Save CSS Theme</button>
+        <button type='button' onClick={this.submitUpdate.bind(this)}>Save Theme</button>
+        <button type='button' onClick={this.createNew.bind(this)}>Create</button>
+        <button type='button' onClick={this.deleteTheme.bind(this)}>Delete</button>
       </div>
     ];
   }

@@ -1,5 +1,5 @@
 import { Component, Event, EventEmitter, Listen, Prop, State } from '@stencil/core';
-import { getThemeName, THEME_VARIABLES } from '../../theme-variables';
+import { STORED_THEME_KEY, THEME_VARIABLES, getThemeUrl } from '../../theme-variables';
 
 
 @Component({
@@ -9,23 +9,24 @@ import { getThemeName, THEME_VARIABLES } from '../../theme-variables';
 })
 export class ThemeSelector {
 
-  @State() themeUrl: string;
+  @State() themeName: string;
   @State() themeVariables: { property: string; value?: string; isRgb?: boolean; }[] = [];
-  @Prop() themeData: { name: string, url: string }[];
+  @Prop() themeData: { name: string }[];
   @Event() themeCssChange: EventEmitter;
 
 
   onChangeUrl(ev) {
-    this.themeUrl = ev.currentTarget.value;
-    localStorage.setItem(STORED_THEME_KEY, this.themeUrl);
+    this.themeName = ev.currentTarget.value;
+    localStorage.setItem(STORED_THEME_KEY, this.themeName);
 
     this.loadThemeCss();
   }
 
   componentWillLoad() {
-    const storedThemeUrl = localStorage.getItem(STORED_THEME_KEY);
-    const defaultThemeUrl = this.themeData[0].url;
-    this.themeUrl = storedThemeUrl || defaultThemeUrl;
+    const storedThemeName = localStorage.getItem(STORED_THEME_KEY);
+    const defaultThemeName = this.themeData[0].name;
+
+    this.themeName = storedThemeName || defaultThemeName;
 
     this.loadThemeCss();
   }
@@ -33,7 +34,9 @@ export class ThemeSelector {
   loadThemeCss() {
     console.log('ThemeSelector loadThemeCss');
 
-    return fetch(this.themeUrl).then(rsp => {
+    const themeUrl = getThemeUrl(this.themeName);
+
+    return fetch(themeUrl).then(rsp => {
       return rsp.text().then(css => {
         this.parseCss(css);
         this.generateCss();
@@ -60,12 +63,10 @@ export class ThemeSelector {
   }
 
   generateCss() {
-    console.log('ThemeSelector generateCss', this.themeUrl);
-
-    const themeName = getThemeName(this.themeUrl);
+    console.log('ThemeSelector generateCss', this.themeName);
 
     const c: string[] = [];
-    c.push(`/** ${themeName} theme **/`);
+    c.push(`/** ${this.themeName} theme **/`);
     c.push(`\n`);
     c.push(':root {');
 
@@ -79,7 +80,7 @@ export class ThemeSelector {
     const cssText = c.join('\n');
     this.themeCssChange.emit({
       cssText: cssText,
-      themeUrl: this.themeUrl
+      themeName: this.themeName
     });
   }
 
@@ -108,7 +109,7 @@ export class ThemeSelector {
     return [
       <div>
         <select onChange={this.onChangeUrl.bind(this)}>
-          {this.themeData.map(d => <option value={d.url} selected={this.themeUrl === d.url}>{d.name}</option>)}
+          {this.themeData.map(d => <option value={d.name} selected={this.themeName === d.name}>{d.name}</option>)}
         </select>
 
         <section>
@@ -118,5 +119,3 @@ export class ThemeSelector {
     ];
   }
 }
-
-const STORED_THEME_KEY = 'theme-builder-theme-url';

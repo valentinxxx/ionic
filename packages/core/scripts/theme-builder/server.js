@@ -24,6 +24,9 @@ function requestHandler(request, response) {
   } else if (parsedUrl.pathname === '/save-css') {
     requestSaveCssHandler(parsedUrl, response);
 
+  } else if (parsedUrl.pathname === '/delete-css') {
+    requestDeleteCssHandler(parsedUrl, response);
+
   } else {
     response.end();
   }
@@ -31,8 +34,6 @@ function requestHandler(request, response) {
 
 
 function requestDataHandler(response) {
-  console.log('theme server request data');
-
   try {
     const demoPaths = glob.sync('**/index.html', {
       cwd: srcComponentsDir
@@ -60,8 +61,7 @@ function requestDataHandler(response) {
 
     const themes = themePaths.map(theme => {
       return {
-        name: theme.replace(/.css/g, ''),
-        url: cssPath + theme
+        name: theme.replace(/.css/g, '')
       };
     }).sort((a, b) => {
       if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
@@ -99,6 +99,29 @@ function requestSaveCssHandler(parsedUrl, response) {
     console.log('css saved!', filePath);
 
     response.end('css saved! ' + filePath, 'utf8');
+
+  } catch (e) {
+    console.log(e);
+    response.end('err: ' + e);
+  }
+}
+
+
+function requestDeleteCssHandler(parsedUrl, response) {
+  try {
+    const theme = (parsedUrl.query.theme || '').toLowerCase().trim();
+    if (!theme) {
+      response.end('missing theme querystring');
+      return;
+    }
+
+    const filePath = path.join(srcCssDir, theme + '.css');
+
+    fs.unlinkSync(filePath);
+
+    console.log('css deleted!', filePath);
+
+    response.end('css deleted! ' + filePath, 'utf8');
 
   } catch (e) {
     console.log(e);
