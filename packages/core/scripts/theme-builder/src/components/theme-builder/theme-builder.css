@@ -1,0 +1,8 @@
+
+main {
+  display: flex;
+}
+
+main > section {
+  flex: 1 auto;
+}

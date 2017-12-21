@@ -1,0 +1,14 @@
+
+.wrapper {
+  box-sizing: border-box;
+  padding: 10px;
+  height: 95vh;
+}
+
+iframe {
+  box-sizing: border-box;
+  display: block;
+  width: 400px;
+  height: 93vh;
+  border: 1px solid gray;
+}
