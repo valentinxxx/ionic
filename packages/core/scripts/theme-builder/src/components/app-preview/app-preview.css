@@ -1,14 +1,15 @@
 
-.wrapper {
+div {
   box-sizing: border-box;
+  width: 100%;
+  height: calc(100% - 20px);
   padding: 10px;
-  height: 95vh;
 }
 
 iframe {
   box-sizing: border-box;
   display: block;
-  width: 400px;
-  height: 93vh;
+  width: 100%;
+  height: 100%;
   border: 1px solid gray;
 }

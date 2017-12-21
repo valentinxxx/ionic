@@ -1,5 +1,5 @@
 import { Component, Event, EventEmitter, Listen, Prop, State } from '@stencil/core';
-import { THEME_VARIABLES } from '../../theme-variables';
+import { getThemeName, THEME_VARIABLES } from '../../theme-variables';
 
 
 @Component({
@@ -11,18 +11,22 @@ export class ThemeSelector {
 
   @State() themeUrl: string;
   @State() themeVariables: { property: string; value?: string; isRgb?: boolean; }[] = [];
-
   @Prop() themeData: { name: string, url: string }[];
-
   @Event() themeCssChange: EventEmitter;
+
 
   onChangeUrl(ev) {
     this.themeUrl = ev.currentTarget.value;
+    localStorage.setItem(STORED_THEME_KEY, this.themeUrl);
+
     this.loadThemeCss();
   }
 
   componentWillLoad() {
-    this.themeUrl = this.themeData[0].url;
+    const storedThemeUrl = localStorage.getItem(STORED_THEME_KEY);
+    const defaultThemeUrl = this.themeData[0].url;
+    this.themeUrl = storedThemeUrl || defaultThemeUrl;
+
     this.loadThemeCss();
   }
 
@@ -56,19 +60,27 @@ export class ThemeSelector {
   }
 
   generateCss() {
-    console.log('ThemeSelector generateCss');
+    console.log('ThemeSelector generateCss', this.themeUrl);
+
+    const themeName = getThemeName(this.themeUrl);
 
     const c: string[] = [];
+    c.push(`/** ${themeName} theme **/`);
+    c.push(`\n`);
     c.push(':root {');
 
     this.themeVariables.forEach(themeVariable => {
+      themeVariable.value = (themeVariable.value || '').trim();
       c.push(`  ${themeVariable.property}: ${themeVariable.value};`);
     });
 
     c.push('}');
 
-    const css = c.join('\n');
-    this.themeCssChange.emit(css);
+    const cssText = c.join('\n');
+    this.themeCssChange.emit({
+      cssText: cssText,
+      themeUrl: this.themeUrl
+    });
   }
 
   @Listen('colorChange')
@@ -96,13 +108,15 @@ export class ThemeSelector {
     return [
       <div>
         <select onChange={this.onChangeUrl.bind(this)}>
-          {this.themeData.map(d => <option value={d.url}>{d.name} - {d.url}</option>)}
+          {this.themeData.map(d => <option value={d.url} selected={this.themeUrl === d.url}>{d.name}</option>)}
         </select>
 
-        <div>
+        <section>
           {this.themeVariables.map(d => <color-selector property={d.property} value={d.value} isRgb={d.isRgb}></color-selector>)}
-        </div>
+        </section>
       </div>
     ];
   }
 }
+
+const STORED_THEME_KEY = 'theme-builder-theme-url';

@@ -84,3 +84,17 @@ export const THEME_VARIABLES = [
   },
 
 ];
+
+export const SERVER_DOMAIN = `http://localhost:5454`;
+export const DATA_URL = `${SERVER_DOMAIN}/data`;
+export const SAVE_CSS_URL = `${SERVER_DOMAIN}/save-css`;
+
+export function createSaveCssUrl(themeName: string, cssText: string) {
+  cssText = encodeURIComponent(cssText);
+  return `${SAVE_CSS_URL}?theme=${themeName}&css=${cssText}`;
+}
+
+export function getThemeName(themeUrl: string) {
+  const fileName = themeUrl.replace(/\\/g, '/').split('/').pop();
+  return fileName.split('.')[0].toLowerCase();
+}

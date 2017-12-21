@@ -1,4 +1,5 @@
 import { Component, Listen, State } from '@stencil/core';
+import { DATA_URL } from '../../theme-variables';
 
 
 @Component({
@@ -12,45 +13,68 @@ export class ThemeBuilder {
   themeData: { name: string, url: string }[];
 
   @State() demoUrl: string;
+  @State() demoMode: string;
   @State() cssText: string = '';
+  @State() themeUrl: string = '';
 
   componentWillLoad() {
-    return fetch('/scripts/theme-builder/www/assets/data.json').then(rsp => {
+    return fetch(DATA_URL).then(rsp => {
       return rsp.json().then(data => {
         this.demoData = data.demos;
         this.themeData = data.themes;
-        this.demoUrl = this.demoData[0].url;
+        this.initUrl();
       });
     }).catch(err => {
       console.log('ThemeBuilder componentWillLoad', err);
     });
   }
 
+  initUrl() {
+    console.log('ThemeBuilder initUrl');
+    const storedUrl = localStorage.getItem(DEMO_URL_KEY);
+    const defaultUrl = this.demoData[0].url;
+    this.demoUrl = storedUrl || defaultUrl;
+
+    const storedMode = localStorage.getItem(DEMO_MODE_KEY);
+    const defaultMode = 'md';
+    this.demoMode = storedMode || defaultMode;
+  }
+
   @Listen('demoUrlChange')
   onDemoUrlChange(ev) {
     this.demoUrl = ev.detail;
+    localStorage.setItem(DEMO_URL_KEY, this.demoUrl);
+  }
+
+  @Listen('demoModeChange')
+  onDemoModeChange(ev) {
+    this.demoMode = ev.detail;
+    localStorage.setItem(DEMO_MODE_KEY, this.demoMode);
   }
 
   @Listen('themeCssChange')
   onThemeCssChange(ev) {
-    this.cssText = ev.detail;
+    this.cssText = ev.detail.cssText;
+    this.themeUrl = ev.detail.themeUrl;
+
+    console.log('ThemeBuilder themeCssChange', this.themeUrl);
   }
 
   render() {
     return [
       <main>
 
-        <section>
-          <demo-selection demoData={this.demoData}></demo-selection>
-          <app-preview demoUrl={this.demoUrl}></app-preview>
+        <section class='preview-column'>
+          <demo-selection demoData={this.demoData} demoUrl={this.demoUrl} demoMode={this.demoMode}></demo-selection>
+          <app-preview demoUrl={this.demoUrl} demoMode={this.demoMode}></app-preview>
         </section>
 
-        <section>
+        <section class='selector-column'>
           <theme-selector themeData={this.themeData}></theme-selector>
         </section>
 
         <section>
-          <css-text value={this.cssText}></css-text>
+          <css-text themeUrl={this.themeUrl} cssText={this.cssText}></css-text>
         </section>
 
       </main>
@@ -58,3 +82,7 @@ export class ThemeBuilder {
   }
 
 }
+
+
+const DEMO_URL_KEY = 'theme-builder-demo-url';
+const DEMO_MODE_KEY = 'theme-builder-demo-mode';

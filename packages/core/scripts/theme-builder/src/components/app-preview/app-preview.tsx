@@ -9,11 +9,14 @@ import { Component, Prop } from '@stencil/core';
 export class AppPreview {
 
   @Prop() demoUrl: string;
+  @Prop() demoMode: string;
 
   render() {
+    const url = `${this.demoUrl}?ionicplatform=${this.demoMode}`;
+
     return [
-      <div class='wrapper'>
-        <iframe src={this.demoUrl}></iframe>
+      <div>
+        <iframe src={url}></iframe>
       </div>
     ];
   }

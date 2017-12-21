@@ -9,10 +9,9 @@ import { Component, Event, EventEmitter, Prop } from '@stencil/core';
 export class ColorSelector {
 
   @Prop() property: string;
-
-  @Prop({mutable: true}) value: string;
-
+  @Prop({ mutable: true }) value: string;
   @Prop() isRgb: boolean;
+
 
   onChange(ev) {
     if (this.isRgb) {
@@ -35,10 +34,14 @@ export class ColorSelector {
 
     return [
       <section>
-        <div>
-          <input type='color' value={hex} onInput={this.onChange.bind(this)} />
-          {this.property}:
-          <input value={value} onInput={this.onChange.bind(this)} />
+        <div class='color-square'>
+          <input type='color' value={hex} onInput={this.onChange.bind(this)} tabindex='-1' />
+        </div>
+        <div class='color-value'>
+          <input type='text' value={value} onInput={this.onChange.bind(this)} />
+        </div>
+        <div class='property-label'>
+          {this.property}
         </div>
       </section>
     ];
