@@ -54,7 +54,7 @@ any
 
 #### mode
 
-string
+any
 
 
 #### popoverId
@@ -126,7 +126,7 @@ any
 
 #### mode
 
-string
+any
 
 
 #### popoverId

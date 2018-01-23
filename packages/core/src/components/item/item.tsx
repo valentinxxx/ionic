@@ -8,7 +8,8 @@ import { CssClassMap } from '../../index';
   styleUrls: {
     ios: 'item.ios.scss',
     md: 'item.md.scss'
-  }
+  },
+  shadow: true
 })
 export class Item {
   private itemStyles: { [key: string]: CssClassMap } = {};

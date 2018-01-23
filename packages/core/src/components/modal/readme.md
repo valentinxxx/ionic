@@ -54,7 +54,7 @@ number
 
 #### mode
 
-string
+any
 
 
 #### showBackdrop
@@ -116,7 +116,7 @@ number
 
 #### mode
 
-string
+any
 
 
 #### showBackdrop
