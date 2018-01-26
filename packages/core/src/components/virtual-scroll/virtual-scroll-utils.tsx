@@ -1,15 +1,35 @@
 const VIEWPORT_MARGIN = 100;
 const MARGIN_BUFFER = 1;
-const BATCH = 1;
+const BATCH = 0;
+
+
+export const enum CellType {
+  Item,
+  Header,
+  Footer
+}
+
+export interface Cell {
+  type: CellType;
+  value: any;
+  index: number;
+  height: number;
+}
 
 export interface VirtualNode {
-  item: any;
+  cell: Cell;
   top: number;
   change: number;
   _d: boolean;
 }
 
-export function updateDom(dom: VirtualNode[], heightIndex: Uint32Array, items: any[], top: number, bottom: number) {
+export type HeaderFn = (item: any, index: number, items: any[]) => string | null;
+export type ItemHeightFn = (item: any, index?: number) => number;
+export type ItemRenderFn = (el: HTMLElement|null, item: any, type: CellType, index?: number) => HTMLElement;
+export type DomRenderFn = (dom: VirtualNode[], height: number) => void;
+
+
+export function updateVDom(dom: VirtualNode[], heightIndex: Uint32Array, cells: Cell[], top: number, bottom: number) {
   // reset dom
   for (const node of dom) {
     node.top = -9999;
@@ -22,49 +42,52 @@ export function updateDom(dom: VirtualNode[], heightIndex: Uint32Array, items: a
   const end = bottom + 1;
 
   for (let i = top; i < end; i++) {
-    const item = items[i];
-    const node = dom.find((n) => n._d && n.item === item);
+    const cell = cells[i];
+    const node = dom.find((n) => n._d && n.cell === cell);
     if (node) {
       node._d = false;
       node.change = 1;
       node.top = heightIndex[i];
     } else {
-      toMutate.push(i);
+      toMutate.push(cell);
     }
   }
 
   // needs to append
   const pool = dom.filter((n) => n._d);
+
   // console.log('toMutate', toMutate.length);
-  for (const index of toMutate) {
-    const node = pool.pop();
+  for (const cell of toMutate) {
+    const node = pool.find(n => n._d && n.cell.type === cell.type);
+    const index = cell.index;
     if (node) {
       node._d = false;
       node.change = 2;
-      node.item = items[index];
+      node.cell = cell;
       node.top = heightIndex[index];
     } else {
       dom.push({
         _d: false,
         change: 2,
-        item: items[index],
+        cell: cell,
         top: heightIndex[index],
       });
     }
   }
 }
 
-export function doRender(el: HTMLElement, itemRender: Function, dom: VirtualNode[], total: number) {
+export function doRender(el: HTMLElement, itemRender: ItemRenderFn, dom: VirtualNode[], total: number) {
   const children = el.children;
   let child: HTMLElement;
   for (let i = 0; i < dom.length; i++) {
     const node = dom[i];
+    const cell = node.cell;
     if (node.change === 2) {
       if (i < children.length) {
         child = children[i] as HTMLElement;
-        itemRender(node.item, child);
+        itemRender(child, cell.value, cell.type, cell.index);
       } else {
-        child = itemRender(node.item, null);
+        child = itemRender(null, cell.value, cell.type, cell.index);
         child.classList.add('virtual-item');
         el.appendChild(child);
       }

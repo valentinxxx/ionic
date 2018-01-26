@@ -41,7 +41,10 @@ import {
   SelectPopoverOption,
 } from './components/select-popover/select-popover';
 import {
-  VirtualNode,
+  DomRenderFn,
+  HeaderFn,
+  ItemHeightFn,
+  ItemRenderFn,
 } from './components/virtual-scroll/virtual-scroll-utils';
 
 import {
@@ -3238,9 +3241,13 @@ declare global {
   }
   namespace JSXElements {
     export interface IonVirtualScrollAttributes extends HTMLAttributes {
-      domUpdate?: (dom: VirtualNode[], height: number) => void;
-      itemHeight?: (item: any[]) => [number];
-      itemRender?: (item: any, el?: HTMLElement) => HTMLElement;
+      domRender?: DomRenderFn;
+      footerFn?: HeaderFn;
+      footerHeight?: number;
+      headerFn?: HeaderFn;
+      headerHeight?: number;
+      itemHeight?: ItemHeightFn;
+      itemRender?: ItemRenderFn;
       items?: any[];
     }
   }

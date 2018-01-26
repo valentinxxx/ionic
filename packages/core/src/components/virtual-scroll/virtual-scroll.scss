@@ -11,8 +11,7 @@ ion-virtual-scroll {
 .virtual-item {
   @include position(0, 0, null, 0);
 
-  height: 45px;
   will-change: transform;
   position: absolute;
-  contain: strict;
+  // contain: strict;
 }

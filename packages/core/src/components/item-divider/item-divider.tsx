@@ -9,7 +9,7 @@ import { Component, Prop } from '@stencil/core';
   },
   host: {
     theme: 'item-divider'
-  }
+  },
 })
 export class ItemDivider {
 

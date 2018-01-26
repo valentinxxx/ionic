@@ -7,9 +7,29 @@
 
 ## Properties
 
-#### domUpdate
+#### domRender
 
 any
+
+
+#### footerFn
+
+any
+
+
+#### footerHeight
+
+number
+
+
+#### headerFn
+
+any
+
+
+#### headerHeight
+
+number
 
 
 #### itemHeight
@@ -29,9 +49,29 @@ any
 
 ## Attributes
 
-#### domUpdate
+#### domRender
 
 any
+
+
+#### footerFn
+
+any
+
+
+#### footerHeight
+
+number
+
+
+#### headerFn
+
+any
+
+
+#### headerHeight
+
+number
 
 
 #### itemHeight
@@ -47,6 +87,11 @@ any
 #### items
 
 any
+
+
+## Methods
+
+#### positionForItem()
 
 
 

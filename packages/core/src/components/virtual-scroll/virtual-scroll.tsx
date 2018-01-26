@@ -1,6 +1,7 @@
-import { Component, Element, EventListenerEnable, Listen, Prop, Watch } from '@stencil/core';
+import { Component, Element, EventListenerEnable, Listen, Method, Prop, Watch } from '@stencil/core';
 import { DomController } from '../../index';
-import { VirtualNode, doRender, getBounds, getShouldUpdate, getTotalHeight, updateDom } from './virtual-scroll-utils';
+import { Cell, CellType, DomRenderFn, HeaderFn, ItemHeightFn, ItemRenderFn, VirtualNode, doRender, getBounds, getShouldUpdate, getTotalHeight, updateVDom } from './virtual-scroll-utils';
+
 
 /**
  * @name VirtualScroll
@@ -212,23 +213,30 @@ export class VirtualScroll {
   private dirty = false;
   private heightIndex: Uint32Array;
   private viewportHeight: number;
+  private cells: Cell[] = [];
   private virtualDom: VirtualNode[] = [];
   private isEnabled = false;
+  private indexDirty = 0;
 
   @Element() el: HTMLElement;
 
   @Prop({context: 'dom'}) dom: DomController;
   @Prop({context: 'enableListener'}) enableListener: EventListenerEnable;
 
-  @Prop() itemHeight: (item: any[]) => [number];
-  @Prop() itemRender: (item: any, el?: HTMLElement) => HTMLElement;
-  @Prop() domUpdate: (dom: VirtualNode[], height: number) => void;
+  @Prop() headerHeight = 45;
+  @Prop() footerHeight = 45;
+
+  @Prop() headerFn: HeaderFn;
+  @Prop() footerFn: HeaderFn;
+  @Prop() itemHeight: ItemHeightFn;
+  @Prop() itemRender: ItemRenderFn;
+  @Prop() domRender: DomRenderFn;
   @Prop() items: any[];
 
   @Watch('itemHeight')
   @Watch('items')
   itemsChanged() {
-    this.calcHeightIndex();
+    this.calcCells();
   }
 
   componentDidLoad() {
@@ -238,12 +246,16 @@ export class VirtualScroll {
       return;
     }
     this.calcDimensions();
-    this.calcHeightIndex();
+    this.calcCells();
     this.updateState();
   }
 
   componentDidUpdate() {
     this.updateState();
+  }
+
+  componentDidUnload() {
+    this.scrollEl = null;
   }
 
   @Listen('scroll', {enabled: false, passive: false})
@@ -253,6 +265,7 @@ export class VirtualScroll {
 
   @Listen('window:resize')
   onResize() {
+    this.indexDirty = 0;
     this.calcDimensions();
     this.updateVirtualScroll();
   }
@@ -262,9 +275,12 @@ export class VirtualScroll {
     if (this.dirty || !this.isEnabled) {
       return;
     }
-    const scrollTop = this.scrollEl.scrollTop;
+    // get index (it is computed lazily)
+    const heightIndex = this.getHeightIndex();
+
     // get bounds of visible items
-    const {top, bottom} = getBounds(this.heightIndex, this.viewportHeight, scrollTop);
+    const scrollTop = this.scrollEl.scrollTop;
+    const {top, bottom} = getBounds(heightIndex, this.viewportHeight, scrollTop);
 
     // fast path, do nothing
     const shouldUpdate = getShouldUpdate(this.topIndex, this.bottomIndex, top, bottom);
@@ -275,25 +291,29 @@ export class VirtualScroll {
     this.bottomIndex = bottom;
 
     // in place mutation of the virtual DOM
-    updateDom(
+    updateVDom(
       this.virtualDom,
-      this.heightIndex,
-      this.items,
+      heightIndex,
+      this.cells,
       top,
       bottom);
 
-    this.fireDomUpdate();
+    if (!this.itemHeight) {
+      this.autoHeight();
+    }
+
+    const totalHeight = getTotalHeight(heightIndex);
+    this.fireDomUpdate(totalHeight);
   }
 
-  private fireDomUpdate() {
+  private fireDomUpdate(totalHeight: number) {
     this.dirty = true;
-    const total = getTotalHeight(this.heightIndex);
     this.dom.write(() => {
       this.dirty = false;
       if (this.itemRender) {
-        doRender(this.el, this.itemRender, this.virtualDom, total);
-      } else if (this.domUpdate) {
-        this.domUpdate(this.virtualDom, total);
+        doRender(this.el, this.itemRender, this.virtualDom, totalHeight);
+      } else if (this.domRender) {
+        this.domRender(this.virtualDom, totalHeight);
       }
     });
   }
@@ -303,7 +323,7 @@ export class VirtualScroll {
       this.scrollEl &&
       this.items &&
       this.itemRender &&
-      (this.itemRender || this.domUpdate) &&
+      (this.itemRender || this.domRender) &&
       this.viewportHeight > 1
     );
     if (shouldEnable !== this.isEnabled) {
@@ -314,24 +334,105 @@ export class VirtualScroll {
     }
   }
 
+  @Method()
+  positionForItem(index: number) {
+    return this.heightIndex[index];
+  }
+
+  updateCellHeight(index: number, height: number) {
+    const cell = this.cells[index];
+    if (cell.height !== height) {
+      cell.height !== height;
+      this.indexDirty = Math.min(this.indexDirty, index);
+    }
+  }
+
   private enableScrollEvents(shouldListen: boolean) {
     this.isEnabled = shouldListen;
     this.enableListener(this, 'scroll', shouldListen, this.scrollEl);
   }
 
-  private calcHeightIndex() {
-    if (this.items && this.itemHeight) {
-      const heightIndex = this.heightIndex = new Uint32Array(this.items.length);
-      const heights = this.itemHeight(this.items);
-      let acum = 0;
-      for (let i = 0; i < heights.length; i++) {
-        heightIndex[i] = acum;
-        acum += heights[i];
+  private calcCells() {
+    if (!this.items) {
+      return;
+    }
+    const items = this.items;
+    const cells = this.cells;
+    const headerFn = this.headerFn;
+    const footerFn = this.footerFn;
+
+    cells.length = 0;
+    this.indexDirty = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (headerFn) {
+        const value = headerFn(item, i, this.items);
+        if (value != null) {
+          cells.push({
+            type: CellType.Header,
+            value: value,
+            index: i,
+            height: this.headerHeight
+          });
+        }
       }
+
+      cells.push({
+        type: CellType.Item,
+        value: item,
+        index: i,
+        height: this.itemHeight(item, i)
+      });
+
+      if (footerFn) {
+        const value = footerFn(item, i, this.items);
+        if (value != null) {
+          cells.push({
+            type: CellType.Footer,
+            value: value,
+            index: i,
+            height: this.footerHeight
+          });
+        }
+      }
+    }
+  }
+
+  private getHeightIndex(): Uint32Array {
+    if (this.indexDirty !== Infinity) {
+      this.calcHeightIndex(this.indexDirty);
+      this.indexDirty = Infinity;
+    }
+    return this.heightIndex;
+  }
+
+  private calcHeightIndex(index: number) {
+    if (!this.items || !this.itemHeight) {
+      return;
+    }
+    const heightIndex = this.heightIndex = resizeBuffer(this.heightIndex, this.items.length);
+
+    const cells = this.cells;
+    let acum = heightIndex[index];
+    for (; index < heightIndex.length; index++) {
+      heightIndex[index] = acum;
+      acum += cells[index].height;
     }
   }
 
   private calcDimensions() {
     this.viewportHeight = this.scrollEl.offsetHeight;
   }
+}
+
+
+function resizeBuffer(buf: Uint32Array, len: number) {
+  if (!buf) {
+    return new Uint32Array(len);
+  }
+  if (buf.length === len) {
+    return buf;
+  }
+  return buf;
 }
